@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jes's Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#1a1a2e;--warm:#FFD580;--coral:#FF7B7B;--teal:#7BFFDB;--violet:#B07BFF;--blue:#7BB3FF;--pink:#FF7BB8;--amber:#FFB347;--text:#f0ece4;--text-soft:#9a97ad;--panel-bg:rgba(20,20,40,0.95)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  .header{text-align:center;padding:2rem 1rem 0.3rem;z-index:10}
+  .header h1{font-family:'Silkscreen',cursive;font-size:clamp(1.2rem,3.5vw,1.8rem);color:var(--warm);text-shadow:0 0 20px rgba(255,213,128,0.3)}
+  .hint{font-family:'Silkscreen',cursive;font-size:0.55rem;color:var(--text-soft);margin-top:0.5rem;animation:pulse 3s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:0.3}50%{opacity:0.7}}
+  .scene{flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:0.5rem 1rem 1rem}
+  .room{position:relative;width:720px;height:540px}
+  .room-svg{width:100%;height:100%}
+  [data-click]{cursor:pointer;transition:filter 0.25s}
+  [data-click]:hover{filter:brightness(1.25) drop-shadow(0 0 8px rgba(255,213,128,0.4))}
+  .tooltip{position:absolute;font-family:'Silkscreen',cursive;font-size:10px;padding:4px 10px;border-radius:5px;pointer-events:none;opacity:0;transition:opacity 0.25s;white-space:nowrap;z-index:50;transform:translate(-50%,-100%)}
+  .tooltip.show{opacity:1}
+  .panel-overlay{position:fixed;inset:0;background:rgba(10,10,25,0.75);backdrop-filter:blur(10px);z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.3s;display:flex;align-items:center;justify-content:center}
+  .panel-overlay.active{opacity:1;pointer-events:all}
+  .panel{background:var(--panel-bg);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2.5rem;max-width:440px;width:90%;transform:translateY(16px) scale(0.96);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);position:relative}
+  .panel-overlay.active .panel{transform:translateY(0) scale(1)}
+  .panel-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-soft);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+  .panel-close:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+  .panel-icon{font-size:2.2rem;margin-bottom:0.75rem}.panel-title{font-family:'Silkscreen',cursive;font-size:1.25rem;margin-bottom:0.5rem}
+  .panel-desc{font-size:0.92rem;line-height:1.7;color:var(--text-soft);margin-bottom:1.5rem}
+  .panel-tags{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1.5rem}
+  .panel-tag{font-size:0.72rem;font-weight:600;padding:0.25rem 0.7rem;border-radius:100px;border:1px solid rgba(255,255,255,0.1);color:var(--text-soft)}
+  .panel-link{display:inline-flex;align-items:center;gap:0.4rem;font-weight:600;font-size:0.88rem;text-decoration:none;padding:0.6rem 1.2rem;border-radius:10px;transition:all 0.2s}
+  .panel-link:hover{transform:translateX(4px)}
+  .panel[data-color="teal"] .panel-title{color:var(--teal)}.panel[data-color="teal"] .panel-link{background:rgba(123,255,219,0.1);color:var(--teal)}
+  .panel[data-color="coral"] .panel-title{color:var(--coral)}.panel[data-color="coral"] .panel-link{background:rgba(255,123,123,0.1);color:var(--coral)}
+  .panel[data-color="violet"] .panel-title{color:var(--violet)}.panel[data-color="violet"] .panel-link{background:rgba(176,123,255,0.1);color:var(--violet)}
+  .panel[data-color="amber"] .panel-title{color:var(--amber)}.panel[data-color="amber"] .panel-link{background:rgba(255,179,71,0.1);color:var(--amber)}
+  .panel[data-color="blue"] .panel-title{color:var(--blue)}.panel[data-color="blue"] .panel-link{background:rgba(123,179,255,0.1);color:var(--blue)}
+  .footer{text-align:center;padding:1.2rem;z-index:10}
+  .social-row{display:flex;justify-content:center;gap:0.6rem;margin-bottom:0.5rem;flex-wrap:wrap}
+  .social-btn{font-family:'Silkscreen',cursive;font-size:0.6rem;padding:0.35rem 0.8rem;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--text-soft);text-decoration:none;transition:all 0.2s}
+  .social-btn:hover{background:rgba(255,255,255,0.1);color:var(--warm);border-color:rgba(255,213,128,0.2)}
+  .footer-copy{font-size:0.65rem;color:rgba(255,255,255,0.2)}
+  .particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .particle{position:absolute;background:rgba(255,213,128,0.2);border-radius:50%;animation:floatUp linear infinite}
+  @keyframes floatUp{0%{transform:translateY(100vh);opacity:0}10%{opacity:1}90%{opacity:0.6}100%{transform:translateY(-10vh);opacity:0}}
+  @keyframes plantWiggle{0%{transform:rotate(0)}25%{transform:rotate(-10deg)}50%{transform:rotate(8deg)}75%{transform:rotate(-5deg)}100%{transform:rotate(0)}}
+  @media(max-width:750px){.room{transform:scale(0.6);transform-origin:top center}}
+  @media(max-width:480px){.room{transform:scale(0.45);transform-origin:top center}}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+<div class="header"><h1>Welcome to Jes's Room</h1><div class="hint">~ click the objects to explore ~</div></div>
+<div class="scene">
+  <div class="room">
+    <div class="tooltip" id="tooltip"></div>
+    <svg class="room-svg" viewBox="0 0 720 540" xmlns="http://www.w3.org/2000/svg" id="roomSvg">
+      <defs>
+        <pattern id="tilesIso" patternTransform="matrix(1,0.5,-1,0.5,0,0) scale(0.7)" width="40" height="40" patternUnits="userSpaceOnUse">
+          <rect width="20" height="20" fill="#2a2a44"/><rect x="20" width="20" height="20" fill="#262641"/>
+          <rect y="20" width="20" height="20" fill="#262641"/><rect x="20" y="20" width="20" height="20" fill="#2a2a44"/>
+        </pattern>
+        <clipPath id="windowClip"><polygon points="175,185 240,152 240,225 175,258"/></clipPath>
+        <clipPath id="calClip"><polygon points="530,175 600,210 600,285 530,250"/></clipPath>
+      </defs>
+
+      <!-- WALLS -->
+      <polygon points="360,70 360,270 30,435 30,235" fill="#2e2e4a"/>
+      <polygon points="360,70 360,270 690,435 690,235" fill="#282844"/>
+      <line x1="360" y1="70" x2="360" y2="270" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+
+      <!-- FLOOR -->
+      <polygon points="360,270 690,435 360,545 30,435" fill="url(#tilesIso)"/>
+      <polygon points="360,270 690,435 360,545 30,435" fill="rgba(0,0,0,0.1)"/>
+
+      <!-- WINDOW -->
+      <g clip-path="url(#windowClip)">
+        <polygon points="175,185 240,152 240,225 175,258" fill="#0a0a1e"/>
+        <circle cx="195" cy="205" r="1.5" fill="#fff" opacity="0.6"><animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/></circle>
+        <circle cx="225" cy="172" r="1.5" fill="#fff" opacity="0.5"><animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" begin="0.8s"/></circle>
+        <circle cx="200" cy="238" r="1" fill="#fff" opacity="0.4"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" repeatCount="indefinite" begin="1.5s"/></circle>
+        <circle cx="228" cy="162" r="6" fill="#ffe8a0" opacity="0.85"/>
+      </g>
+      <polygon points="175,185 240,152 240,225 175,258" fill="none" stroke="#555" stroke-width="3"/>
+      <line x1="207" y1="168" x2="207" y2="242" stroke="#555" stroke-width="2.5"/>
+      <line x1="175" y1="221" x2="240" y2="188" stroke="#555" stroke-width="2.5"/>
+
+      <!-- LAMP -->
+      <g id="lampGroup" data-action="lamp" style="cursor:pointer">
+        <ellipse cx="360" cy="290" rx="14" ry="6" fill="#444"/>
+        <rect x="357" y="235" width="6" height="55" fill="#555" rx="1"/>
+        <polygon points="345,222 375,222 380,237 340,237" fill="var(--warm)" opacity="0.85" id="lampShade"/>
+        <ellipse cx="360" cy="260" rx="40" ry="25" fill="rgba(255,213,128,0.07)" id="lampGlow"/>
+        <ellipse cx="360" cy="245" rx="18" ry="8" fill="rgba(255,213,128,0.12)" id="lampGlowInner"/>
+      </g>
+
+      <!-- CALENDAR -->
+      <g data-click="calendar" data-tip="Calendar AI" data-tip-color="violet">
+        <g clip-path="url(#calClip)">
+          <polygon points="530,175 600,210 600,285 530,250" fill="#fff"/>
+          <polygon points="530,175 600,210 600,224 530,189" fill="#FF7B7B"/>
+          <text id="calMonth" font-family="Silkscreen,cursive" font-size="8" fill="#fff" text-anchor="middle" dominant-baseline="middle" x="565" y="198" transform="rotate(26.57,565,198)"></text>
+          <g id="calGrid"></g>
+        </g>
+      </g>
+
+      <!-- BOOKSHELF -->
+      <g data-click="mumble_note" data-tip="Mumble Note" data-tip-color="teal" transform="translate(148,395)">
+        <polygon points="0,-95 -70,-60 -70,35 0,0" fill="#4E3A2A"/>
+        <polygon points="-52,-51 -70,-60 -70,35 -52,44" fill="#52402E"/>
+        <polygon points="18,-86 -52,-51 -52,44 18,9" fill="#6B5340"/>
+        <polygon points="18,-86 0,-95 0,0 18,9" fill="#604830"/>
+        <polygon points="0,-95 -70,-60 -52,-51 18,-86" fill="#7B6248"/>
+        <polygon points="0,-31.7 -70,3.3 -52,12.3 18,-22.7" fill="#7B6248" opacity="0.7"/>
+        <line x1="18" y1="-22.7" x2="-52" y2="12.3" stroke="#6B5240" stroke-width="1"/>
+        <polygon points="0,-63.3 -70,-28.3 -52,-19.3 18,-54.3" fill="#7B6248" opacity="0.7"/>
+        <line x1="18" y1="-54.3" x2="-52" y2="-19.3" stroke="#6B5240" stroke-width="1"/>
+        <polygon points="14,9 6,13 6,-13 14,-17" fill="var(--coral)"/>
+        <polygon points="5,13.5 -3,17.5 -3,-8.5 5,-12.5" fill="var(--blue)"/>
+        <polygon points="-4,18 -12,22 -12,-4 -4,-8" fill="var(--violet)"/>
+        <polygon points="-13,22.5 -21,26.5 -21,0.5 -13,-3.5" fill="var(--warm)"/>
+        <polygon points="-22,27 -30,31 -30,5 -22,1" fill="var(--teal)"/>
+        <polygon points="-31,31.5 -39,35.5 -39,9.5 -31,5.5" fill="var(--pink)"/>
+        <polygon points="14,-22.7 6,-18.7 6,-44.7 14,-48.7" fill="var(--teal)"/>
+        <polygon points="4,-17.7 -4,-13.7 -4,-39.7 4,-43.7" fill="var(--coral)"/>
+        <polygon points="-6,-12.7 -14,-8.7 -14,-34.7 -6,-38.7" fill="var(--amber)"/>
+        <polygon points="-16,-7.7 -24,-3.7 -24,-29.7 -16,-33.7" fill="var(--blue)"/>
+        <polygon points="14,-54.3 6,-50.3 6,-76.3 14,-80.3" fill="var(--violet)"/>
+        <polygon points="4,-49.3 -4,-45.3 -4,-71.3 4,-75.3" fill="var(--warm)"/>
+        <polygon points="-6,-44.3 -14,-40.3 -14,-66.3 -6,-70.3" fill="var(--pink)"/>
+      </g>
+
+      <!-- ROBOT -->
+      <g data-click="mumble_ai" data-tip="Mumble AI" data-tip-color="blue" transform="translate(230,415)">
+        <rect x="15" y="22" width="36" height="28" rx="4" fill="#b8bcc8"/>
+        <rect x="18" y="2" width="30" height="20" rx="6" fill="#cdd1da"/>
+        <line x1="33" y1="2" x2="33" y2="-7" stroke="#aaa" stroke-width="2"/>
+        <circle cx="33" cy="-9" r="3.5" fill="var(--blue)"><animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/></circle>
+        <circle cx="27" cy="11" r="3.5" fill="#1a1a2e"/><circle cx="39" cy="11" r="3.5" fill="#1a1a2e"/>
+        <circle cx="27.5" cy="10.5" r="1.8" fill="var(--teal)"><animate attributeName="fill" values="#7BFFDB;#7BB3FF;#7BFFDB" dur="3s" repeatCount="indefinite"/></circle>
+        <circle cx="39.5" cy="10.5" r="1.8" fill="var(--teal)"><animate attributeName="fill" values="#7BFFDB;#7BB3FF;#7BFFDB" dur="3s" repeatCount="indefinite" begin="0.5s"/></circle>
+        <rect x="26" y="17" width="14" height="2.5" rx="1" fill="#1a1a2e"/>
+        <rect x="28" y="17" width="2.5" height="2.5" fill="var(--teal)" opacity="0.6"/><rect x="32" y="17" width="2.5" height="2.5" fill="var(--teal)" opacity="0.6"/><rect x="36" y="17" width="2.5" height="2.5" fill="var(--teal)" opacity="0.6"/>
+        <rect x="22" y="27" width="22" height="11" rx="2" fill="#1a1a2e"/>
+        <line x1="25" y1="31" x2="36" y2="31" stroke="var(--teal)" stroke-width="1.5" opacity="0.5"/><line x1="25" y1="34.5" x2="32" y2="34.5" stroke="var(--warm)" stroke-width="1.5" opacity="0.4"/>
+        <rect x="6" y="25" width="9" height="5" rx="2.5" fill="#b8bcc8"/><rect x="51" y="25" width="9" height="5" rx="2.5" fill="#b8bcc8"/>
+        <rect x="21" y="50" width="9" height="11" rx="2" fill="#a0a4b0"/><rect x="36" y="50" width="9" height="11" rx="2" fill="#a0a4b0"/>
+        <rect x="18" y="59" width="15" height="4" rx="2" fill="#8e929e"/><rect x="33" y="59" width="15" height="4" rx="2" fill="#8e929e"/>
+      </g>
+
+      <!-- DESK -->
+      <g transform="translate(400,355)">
+        <polygon points="75,0 150,38 75,76 0,38" fill="#6B5344"/>
+        <polygon points="0,38 75,76 75,96 0,58" fill="#5A4234"/>
+        <polygon points="150,38 75,76 75,96 150,58" fill="#4E3828"/>
+        <rect x="8" y="58" width="5" height="18" fill="#4E3828"/><rect x="137" y="58" width="5" height="18" fill="#4E3828"/>
+        <!-- LAPTOP -->
+        <g data-click="substack" data-tip="Jes's Substack" data-tip-color="coral">
+          <polygon points="35,20 85,20 88,28 32,28" fill="#333"/>
+          <polygon points="38,-6 82,-6 85,20 35,20" fill="#1a1a3a" stroke="#444" stroke-width="1.2"/>
+          <polygon points="41,-3 79,-3 82,18 38,18" fill="#111a30"/>
+          <line x1="44" y1="1" x2="64" y2="1" stroke="var(--coral)" stroke-width="1.5" opacity="0.7"/>
+          <line x1="44" y1="5" x2="74" y2="5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+          <line x1="44" y1="8.5" x2="68" y2="8.5" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+          <line x1="44" y1="12" x2="60" y2="12" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        </g>
+        <!-- BEER -->
+        <g data-click="brew" data-tip="Brew Your Thoughts" data-tip-color="amber">
+          <rect x="108" y="6" width="20" height="28" rx="3" fill="rgba(255,179,71,0.65)"/>
+          <ellipse cx="118" cy="7" rx="11" ry="5" fill="#fff5e0"/>
+          <circle cx="114" cy="6" r="3" fill="#fffdf5"/><circle cx="120" cy="5" r="3.5" fill="#fff8e8"/><circle cx="116" cy="8" r="2" fill="#fff5e0"/>
+          <rect x="111" y="12" width="3" height="16" rx="1" fill="rgba(255,255,255,0.12)"/>
+          <circle cx="116" cy="24" r="1" fill="rgba(255,255,255,0.2)"><animate attributeName="cy" values="28;10" dur="2.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0;0.3" dur="2.5s" repeatCount="indefinite"/></circle>
+        </g>
+      </g>
+
+      <!-- PLANT -->
+      <g id="plantGroup" data-action="plant" style="cursor:pointer" transform="translate(575,410)">
+        <g id="plantLeaves" style="transform-origin:22px 22px">
+          <path d="M22,22 Q15,5 8,0" fill="none" stroke="#4CAF50" stroke-width="3" stroke-linecap="round"/>
+          <path d="M22,22 Q28,8 35,3" fill="none" stroke="#66BB6A" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M22,22 Q8,14 3,7" fill="none" stroke="#43A047" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="8" cy="0" r="3.5" fill="#4CAF50"/><circle cx="35" cy="3" r="3" fill="#66BB6A"/><circle cx="3" cy="7" r="2.5" fill="#43A047"/>
+        </g>
+        <polygon points="12,22 32,22 29,42 15,42" fill="#C67B5C"/>
+        <rect x="10" y="20" width="24" height="5" rx="2" fill="#D4896A"/>
+        <rect x="-2" y="-5" width="48" height="52" fill="transparent"/>
+      </g>
+
+      <!-- Rug -->
+      <ellipse cx="360" cy="455" rx="60" ry="25" fill="rgba(176,123,255,0.05)"/>
+
+      <!-- CAT -->
+      <g id="catGroup" data-action="cat" style="cursor:pointer;pointer-events:all" transform="translate(330,435)">
+        <rect x="-8" y="-18" width="55" height="50" fill="transparent"/>
+        <ellipse cx="15" cy="18" rx="14" ry="10" fill="#E8B84B"/>
+        <circle cx="15" cy="7" r="9" fill="#E8B84B"/>
+        <polygon points="7,0 4,-8 12,-2" fill="#E8B84B"/><polygon points="23,0 26,-8 18,-2" fill="#E8B84B"/>
+        <polygon points="8,0 6,-6 12,-1" fill="#D4A03E"/><polygon points="22,0 24,-6 18,-1" fill="#D4A03E"/>
+        <g id="catEyesOpen"><ellipse cx="10" cy="6" rx="2.5" ry="3" fill="#1a1a2e"/><ellipse cx="20" cy="6" rx="2.5" ry="3" fill="#1a1a2e"/><circle cx="10.5" cy="5.5" r="1" fill="var(--teal)"/><circle cx="20.5" cy="5.5" r="1" fill="var(--teal)"/></g>
+        <g id="catEyesClosed" style="display:none"><line x1="7" y1="6" x2="13" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="6" x2="23" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/></g>
+        <polygon points="14,9 16,9 15,10.5" fill="#D4A03E"/>
+        <path d="M29,18 Q38,12 35,22" fill="none" stroke="#E8B84B" stroke-width="3" stroke-linecap="round"/>
+        <g id="catZzz" style="display:none"></g>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<div class="panel-overlay" id="overlay">
+  <div class="panel" id="panel">
+    <button class="panel-close" id="panelCloseBtn">×</button>
+    <div class="panel-icon" id="panelIcon"></div>
+    <div class="panel-title" id="panelTitle"></div>
+    <div class="panel-desc" id="panelDesc"></div>
+    <div class="panel-tags" id="panelTags"></div>
+    <a class="panel-link" id="panelLink" href="#" target="_blank">Visit →</a>
+  </div>
+</div>
+<div class="footer">
+  <div class="social-row">
+    <a href="https://x.com/Jeswan22" target="_blank" class="social-btn">X</a>
+    <a href="https://www.linkedin.com/in/jes-wan-04182792/" target="_blank" class="social-btn">LinkedIn</a>
+    <a href="mailto:wanyujie0122&#64;gmail.com" class="social-btn">Email</a>
+  </div>
+  <div class="footer-copy">© 2026 Jes</div>
+</div>
+
+<script>
+// ===== ALL DATA =====
+var projects = {
+  mumble_note: { icon:'\u{1F4D3}', title:'Mumble Note', color:'teal', desc:'Voice-first note-taking that captures your thoughts naturally. Speak your mind, get structured notes.', tags:['Voice AI','Productivity','Notes'], link:'https://www.mumblenote.com' },
+  mumble_ai: { icon:'\u{1F916}', title:'Mumble AI', color:'blue', desc:'AI-powered voice intelligence platform. Meeting notes, voice notes, dictation, 3-in-one.', tags:['AI','Voice','Dictation','Skills'], link:'https://www.heymumble.com' },
+  calendar: { icon:'\u{1F4C5}', title:'Calendar AI', color:'violet', desc:'A Chrome extension that brings AI-powered intelligence to your Google Calendar.', tags:['Chrome Extension','AI','Productivity'], link:'https://www.jeswan.ai/calendar-ai' },
+  substack: { icon:'\u270D\uFE0F', title:'Jes\u2019s Substack', color:'coral', desc:'Writing about building products, learning, and growing in the AI era.', tags:['Writing','Newsletter','Indie Maker'], link:'https://jeswan.substack.com/' },
+  brew: { icon:'\u{1F37A}', title:'Brew Your Thoughts', color:'amber', desc:'Speak or type your thoughts, get a digital journal page with source card and ASCII images that you can drag around.', tags:['Journal','Creative','AI'], link:'https://www.jeswan.ai/brew' }
+};
+
+// ===== PANEL =====
+function showPanel(key) {
+  var p = projects[key];
+  if (!p) return;
+  document.getElementById('panelIcon').textContent = p.icon;
+  document.getElementById('panelTitle').textContent = p.title;
+  document.getElementById('panelDesc').textContent = p.desc;
+  document.getElementById('panelLink').href = p.link;
+  document.getElementById('panel').setAttribute('data-color', p.color);
+  document.getElementById('panelTags').innerHTML = p.tags.map(function(t){ return '<span class="panel-tag">'+t+'</span>'; }).join('');
+  document.getElementById('overlay').classList.add('active');
+}
+
+document.getElementById('overlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('active');
+});
+document.getElementById('panelCloseBtn').addEventListener('click', function() {
+  document.getElementById('overlay').classList.remove('active');
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') document.getElementById('overlay').classList.remove('active');
+});
+
+// ===== TOOLTIP =====
+var tip = document.getElementById('tooltip');
+function showTip(el, text, color) {
+  tip.textContent = text;
+  tip.style.background = 'var(--' + color + ')';
+  tip.style.color = (color === 'amber' || color === 'teal') ? 'var(--bg)' : '#fff';
+  var b = el.getBoundingClientRect();
+  var r = document.querySelector('.room').getBoundingClientRect();
+  tip.style.left = (b.left + b.width/2 - r.left) + 'px';
+  tip.style.top = (b.top - r.top - 8) + 'px';
+  tip.classList.add('show');
+}
+function hideTip() { tip.classList.remove('show'); }
+
+// ===== BIND ALL [data-click] elements via JS (no inline handlers!) =====
+document.querySelectorAll('[data-click]').forEach(function(el) {
+  el.addEventListener('click', function(e) {
+    e.stopPropagation();
+    showPanel(this.getAttribute('data-click'));
+  });
+  el.addEventListener('mouseenter', function() {
+    var tipText = this.getAttribute('data-tip');
+    var tipColor = this.getAttribute('data-tip-color');
+    if (tipText) showTip(this, tipText, tipColor);
+  });
+  el.addEventListener('mouseleave', hideTip);
+});
+
+// ===== LAMP =====
+var lampOn = true;
+document.getElementById('lampGroup').addEventListener('click', function(e) {
+  e.stopPropagation();
+  lampOn = !lampOn;
+  document.getElementById('lampShade').setAttribute('opacity', lampOn ? '0.85' : '0.35');
+  document.getElementById('lampGlow').setAttribute('fill', lampOn ? 'rgba(255,213,128,0.07)' : 'rgba(0,0,0,0)');
+  document.getElementById('lampGlowInner').setAttribute('fill', lampOn ? 'rgba(255,213,128,0.12)' : 'rgba(0,0,0,0)');
+  document.getElementById('roomSvg').style.filter = lampOn ? '' : 'brightness(0.82)';
+});
+
+// ===== CAT =====
+var catSleeping = false;
+document.getElementById('catGroup').addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  catSleeping = !catSleeping;
+  document.getElementById('catEyesOpen').style.display = catSleeping ? 'none' : '';
+  document.getElementById('catEyesClosed').style.display = catSleeping ? '' : 'none';
+  var zzz = document.getElementById('catZzz');
+  if (catSleeping) {
+    zzz.style.display = '';
+    zzz.innerHTML = '<text font-family="Silkscreen,cursive" font-size="8" fill="#FFD580" x="32" y="-4" opacity="0"><animate attributeName="opacity" values="0;0.7;0" dur="2s" repeatCount="indefinite"/>z</text><text font-family="Silkscreen,cursive" font-size="6" fill="#FFD580" x="40" y="-14" opacity="0"><animate attributeName="opacity" values="0;0.5;0" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>z</text>';
+  } else {
+    zzz.style.display = 'none';
+    zzz.innerHTML = '';
+  }
+});
+
+// ===== PLANT =====
+document.getElementById('plantGroup').addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  var el = document.getElementById('plantLeaves');
+  el.style.animation = 'none';
+  el.getBoundingClientRect();
+  el.style.animation = 'plantWiggle 0.6s ease-in-out';
+});
+
+// ===== CALENDAR =====
+(function() {
+  var now = new Date();
+  document.getElementById('calMonth').textContent = now.toLocaleString('en',{month:'short'}).toUpperCase() + ' ' + now.getFullYear();
+  var grid = document.getElementById('calGrid');
+  var firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  var daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  var today = now.getDate();
+  var baseX=535, baseY=198, colDx=8, colDy=4, rowDy=8, day=1;
+  for (var row=0; row<6 && day<=daysInMonth; row++) {
+    for (var col=0; col<7; col++) {
+      if (row===0 && col<firstDay) continue;
+      if (day>daysInMonth) break;
+      var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx', baseX + col*colDx);
+      c.setAttribute('cy', baseY + col*colDy + row*rowDy);
+      c.setAttribute('r', day===today ? '2.5' : '1.8');
+      c.setAttribute('fill', day===today ? '#B07BFF' : '#ccc');
+      if (day===today) { c.setAttribute('stroke','rgba(176,123,255,0.4)'); c.setAttribute('stroke-width','2'); }
+      grid.appendChild(c);
+      day++;
+    }
+  }
+})();
+
+// ===== PARTICLES =====
+(function() {
+  var pEl = document.getElementById('particles');
+  for (var i=0; i<12; i++) {
+    var p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100 + '%';
+    p.style.animationDuration = (10+Math.random()*15) + 's';
+    p.style.animationDelay = Math.random()*10 + 's';
